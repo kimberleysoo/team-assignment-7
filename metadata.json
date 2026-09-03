@@ -1,0 +1,6 @@
+{
+  "name": "ÉLAN Singapore — Luxury Beauty & Wellness Sanctuary",
+  "description": "Singapore's premier luxury beauty and aesthetics sanctuary connecting discerning clients to top master estheticians across Orchard Road, Marina Bay, and Tanglin with seamless bilingual support and flexible installment plans.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

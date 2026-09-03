@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  --color-primary: #171513;
+  --color-primary-container: #24201c;
+  --color-on-primary-container: #faf7f2;
+  
+  --color-gold: #b89058;
+  --color-gold-deep: #8c6d3b;
+  --color-gold-light: #f3ece0;
+  
+  --color-surface: #faf7f2;
+  --color-surface-bright: #ffffff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f7f4ee;
+  --color-surface-container: #f0e9dc;
+  --color-surface-container-high: #e7dfd0;
+  --color-surface-container-highest: #ded4c3;
+  
+  --color-on-surface: #171513;
+  --color-on-surface-variant: #5e564e;
+  --color-secondary: #3b3630;
+  --color-secondary-container: #efe7db;
+  --color-on-secondary-container: #221e19;
+  --color-inverse-surface: #171513;
+  
+  --color-outline: #8c8275;
+  --color-outline-variant: #dfcdb5;
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .gold-rule {
+    height: 1.5px;
+    background: linear-gradient(90deg, #b89058 0%, #dfcdb5 100%);
+  }
+
+  .luxury-gradient {
+    background: linear-gradient(135deg, #24201c 0%, #151311 100%);
+  }
+
+  .luxury-gold-shimmer {
+    background: linear-gradient(90deg, #b89058, #dfcdb5, #b89058);
+  }
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #faf7f2;
+  color: #171513;
+}
+
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+.font-sans {
+  font-family: var(--font-sans);
+}
+
