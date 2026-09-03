@@ -14,6 +14,7 @@ import { ConfirmationPaymentView } from './components/ConfirmationPaymentView';
 import { BookingsView } from './components/BookingsView';
 import { SavedView } from './components/SavedView';
 import { ProfileView } from './components/ProfileView';
+import { TalkToUsView } from './components/TalkToUsView';
 import { BottomNavBar } from './components/BottomNavBar';
 import { ReviewsModal } from './components/ReviewsModal';
 import { InstallmentsInfoModal } from './components/InstallmentsInfoModal';
@@ -89,7 +90,7 @@ export default function App() {
   };
 
   // Whether to show bottom floating nav bar (on high-level hubs)
-  const showBottomNav = ['discover', 'bookings', 'saved', 'profile'].includes(activeScreen);
+  const showBottomNav = ['discover', 'bookings', 'saved', 'talk-to-us', 'profile'].includes(activeScreen);
 
   return (
     <div className="min-h-screen bg-[#faf7f2] text-[#171513] font-sans antialiased selection:bg-[#b89058] selection:text-white">
@@ -162,6 +163,20 @@ export default function App() {
                 }`}
               >
                 {t.stepReserve}
+              </button>
+
+              <button
+                onClick={() => {
+                  setActiveScreen('talk-to-us');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className={`px-2 py-1 rounded-sm transition-all whitespace-nowrap ${
+                  activeScreen === 'talk-to-us'
+                    ? 'bg-[#b89058] text-[#141210] font-bold shadow-xs'
+                    : 'text-[#faf7f2]/60 hover:text-[#dfcdb5]'
+                }`}
+              >
+                {t.navTalkToUs}
               </button>
             </div>
 
@@ -275,10 +290,24 @@ export default function App() {
           />
         )}
 
+        {activeScreen === 'talk-to-us' && (
+          <TalkToUsView
+            language={language}
+            onExploreSanctuary={() => {
+              setActiveScreen('discover');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        )}
+
         {activeScreen === 'profile' && (
           <ProfileView
             onOpenInstallmentsModal={() => setIsInstallmentsModalOpen(true)}
             onOpenJournalModal={() => setIsJournalModalOpen(true)}
+            onNavigateToTalkToUs={() => {
+              setActiveScreen('talk-to-us');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           />
         )}
       </main>

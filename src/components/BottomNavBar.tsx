@@ -1,5 +1,5 @@
 import React from 'react';
-import { Compass, Calendar, Bookmark, User } from 'lucide-react';
+import { Compass, Calendar, Bookmark, MessageCircle, User } from 'lucide-react';
 import { ActiveScreen } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -77,6 +77,22 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
           </div>
           <span className="text-[9px] uppercase tracking-[0.16em] font-bold mt-1">{t.navSaved}</span>
           {activeScreen === 'saved' && (
+            <span className="w-4 h-0.5 bg-[#c8a97e] rounded-full mt-0.5 shadow-[0_0_8px_#c8a97e]"></span>
+          )}
+        </button>
+
+        {/* Talk to Us */}
+        <button
+          onClick={() => onNavigate('talk-to-us')}
+          className={`flex flex-col items-center justify-center transition-all active:scale-[0.985] relative py-1 px-3 ${
+            activeScreen === 'talk-to-us'
+              ? 'text-[#dfcdb5] font-bold'
+              : 'text-[#FAF8F5]/50 hover:text-[#dfcdb5]'
+          }`}
+        >
+          <MessageCircle className={`w-5 h-5 ${activeScreen === 'talk-to-us' ? 'stroke-[#c8a97e] stroke-[2.2]' : 'stroke-1.5'}`} />
+          <span className="text-[9px] uppercase tracking-[0.16em] font-bold mt-1">{t.navTalkToUs}</span>
+          {activeScreen === 'talk-to-us' && (
             <span className="w-4 h-0.5 bg-[#c8a97e] rounded-full mt-0.5 shadow-[0_0_8px_#c8a97e]"></span>
           )}
         </button>

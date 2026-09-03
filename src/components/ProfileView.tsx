@@ -11,18 +11,21 @@ import {
   Check, 
   CheckCircle2, 
   Smartphone,
-  ExternalLink
+  ExternalLink,
+  MessageCircle
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 interface ProfileViewProps {
   onOpenInstallmentsModal: () => void;
   onOpenJournalModal: () => void;
+  onNavigateToTalkToUs?: () => void;
 }
 
 export const ProfileView: React.FC<ProfileViewProps> = ({
   onOpenInstallmentsModal,
-  onOpenJournalModal
+  onOpenJournalModal,
+  onNavigateToTalkToUs
 }) => {
   const { language, setLanguage, toggleLanguage, t } = useLanguage();
 
@@ -241,6 +244,31 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Concierge & Community Dialogue */}
+      {onNavigateToTalkToUs && (
+        <div className="p-4 rounded-xl bg-white border border-[#c8a97e]/35 shadow-xs flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-[#faf7f2] border border-[#e8dfd5] flex items-center justify-center text-[#b89058]">
+              <MessageCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="font-serif text-sm font-normal text-[#171513]">
+                {language === 'zh' ? '咨询我们与社群交流' : 'Talk to Us & Concierge Dialogue'}
+              </h4>
+              <p className="text-[11px] text-[#5e564e]">
+                {language === 'zh' ? '在线向总监美疗师及礼宾团队留言咨询' : 'Direct public inquiries & community dialogue'}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onNavigateToTalkToUs}
+            className="px-3 py-1.5 rounded-sm bg-[#141210] text-[#dfcdb5] hover:text-white text-xs font-medium border border-[#b89058]/40 transition-colors cursor-pointer"
+          >
+            {language === 'zh' ? '前往咨询' : 'Open Desk'}
+          </button>
+        </div>
+      )}
 
       {/* Security & Discretion Protocol */}
       <div className="p-4 rounded-lg bg-[#fbf8f3] border border-[#c8a97e]/30 flex items-center justify-between text-xs text-[#5e564e] font-sans">

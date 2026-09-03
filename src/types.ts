@@ -1,4 +1,4 @@
-export type ActiveScreen = 'discover' | 'practitioner' | 'datetime' | 'confirmation' | 'bookings' | 'saved' | 'profile';
+export type ActiveScreen = 'discover' | 'practitioner' | 'datetime' | 'confirmation' | 'bookings' | 'saved' | 'profile' | 'talk-to-us';
 
 export type AppLanguage = 'en' | 'zh';
 

@@ -9,6 +9,7 @@ export interface Translations {
   navItinerary: string;
   navBookings: string;
   navSaved: string;
+  navTalkToUs: string;
   navProfile: string;
   stepSanctuary: string;
   stepPractitioner: string;
@@ -175,6 +176,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     navItinerary: 'Itinerary',
     navBookings: 'Itinerary',
     navSaved: 'Saved',
+    navTalkToUs: 'Talk to Us',
     navProfile: 'VIP Client',
     stepSanctuary: '01. Sanctuary',
     stepPractitioner: '02. Master Suite',
@@ -334,6 +336,7 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     navItinerary: '预约行程',
     navBookings: '预约行程',
     navSaved: '我的收藏',
+    navTalkToUs: '咨询我们',
     navProfile: '贵宾会员',
     stepSanctuary: '01. 甄选探索',
     stepPractitioner: '02. 专家档案',
