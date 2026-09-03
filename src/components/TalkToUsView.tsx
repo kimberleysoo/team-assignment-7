@@ -1,5 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { MessageSquare, ShieldCheck, Clock, Phone, Mail, Sparkles, RefreshCw, Send, CheckCircle2 } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { 
+  MessageSquare, 
+  ShieldCheck, 
+  Clock, 
+  Phone, 
+  Mail, 
+  Sparkles, 
+  RefreshCw, 
+  Send, 
+  CheckCircle2, 
+  ExternalLink,
+  AlertCircle
+} from 'lucide-react';
 import { AppLanguage } from '../types';
 
 declare global {
@@ -7,22 +19,10 @@ declare global {
     DISQUS?: {
       reset: (options: {
         reload: boolean;
-        config?: (this: {
-          page: {
-            url?: string;
-            identifier?: string;
-            title?: string;
-          };
-        }) => void;
+        config?: (this: any) => void;
       }) => void;
     };
-    disqus_config?: (this: {
-      page: {
-        url?: string;
-        identifier?: string;
-        title?: string;
-      };
-    }) => void;
+    disqus_config?: (this: any) => void;
   }
 }
 
@@ -39,105 +39,138 @@ export const TalkToUsView: React.FC<TalkToUsViewProps> = ({
   onExploreSanctuary
 }) => {
   const [isReloading, setIsReloading] = useState(false);
-  const [loadStatus, setLoadStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [loadStatus, setLoadStatus] = useState<'loading' | 'ready' | 'blocked'>('loading');
+  const [inquiryName, setInquiryName] = useState('');
+  const [inquiryMessage, setInquiryMessage] = useState('');
+  const [inquirySubmitted, setInquirySubmitted] = useState(false);
+  const pollTimerRef = useRef<number | null>(null);
 
   const isZh = language === 'zh';
 
   const loadDisqus = () => {
     setIsReloading(true);
+    setLoadStatus('loading');
+
+    const container = document.getElementById('disqus_thread');
+    if (!container) {
+      setIsReloading(false);
+      return;
+    }
 
     try {
+      // Safe config handler that never throws if 'this' or 'page' is undefined
+      const applyConfig = function (this: any) {
+        const target = this || window;
+        if (!target.page) {
+          target.page = {};
+        }
+        target.page.url = PAGE_URL;
+        target.page.identifier = PAGE_IDENTIFIER;
+        target.page.title = isZh
+          ? 'ÉLAN 艾澜私享中心 — 咨询我们与贵宾交流'
+          : 'ÉLAN Singapore — Talk to Us & Concierge Dialogue';
+      };
+
       if (typeof window !== 'undefined' && window.DISQUS) {
-        // Reload existing Disqus instance for this SPA tab view
+        // SPA reload: Disqus reset
         window.DISQUS.reset({
           reload: true,
-          config: function () {
-            this.page.url = PAGE_URL;
-            this.page.identifier = PAGE_IDENTIFIER;
-            this.page.title = isZh
-              ? 'ÉLAN 艾澜私享中心 — 咨询我们与贵宾交流'
-              : 'ÉLAN Singapore — Talk to Us & Concierge Dialogue';
-          }
+          config: applyConfig
         });
         setLoadStatus('ready');
-        setTimeout(() => setIsReloading(false), 600);
+        setTimeout(() => setIsReloading(false), 500);
       } else {
-        // Initial setup of disqus_config
-        window.disqus_config = function () {
-          this.page.url = PAGE_URL;
-          this.page.identifier = PAGE_IDENTIFIER;
-          this.page.title = isZh
-            ? 'ÉLAN 艾澜私享中心 — 咨询我们与贵宾交流'
-            : 'ÉLAN Singapore — Talk to Us & Concierge Dialogue';
-        };
+        window.disqus_config = applyConfig;
 
-        // Check if embed script is already injected
-        const existingScript = document.getElementById('disqus-embed-script');
+        // Check if embed script already exists
+        let existingScript = document.getElementById('disqus-embed-script') as HTMLScriptElement | null;
         if (!existingScript) {
           const d = document;
           const s = d.createElement('script');
           s.id = 'disqus-embed-script';
           s.src = 'https://elan-3.disqus.com/embed.js';
           s.setAttribute('data-timestamp', String(+new Date()));
+          s.async = true;
+
           s.onload = () => {
             setLoadStatus('ready');
             setIsReloading(false);
           };
+
           s.onerror = () => {
-            setLoadStatus('error');
+            // Likely blocked by browser ad-blocker or iframe cookie restrictions
+            setLoadStatus('blocked');
             setIsReloading(false);
           };
+
           (d.head || d.body).appendChild(s);
         } else {
-          // If script tag exists but window.DISQUS not immediately ready, poll briefly
+          // Script tag exists; poll for window.DISQUS initialization
           let attempts = 0;
-          const interval = setInterval(() => {
+          if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+          pollTimerRef.current = window.setInterval(() => {
             attempts++;
             if (window.DISQUS) {
-              clearInterval(interval);
-              window.DISQUS.reset({
-                reload: true,
-                config: function () {
-                  this.page.url = PAGE_URL;
-                  this.page.identifier = PAGE_IDENTIFIER;
-                }
-              });
-              setLoadStatus('ready');
+              if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+              try {
+                window.DISQUS.reset({
+                  reload: true,
+                  config: applyConfig
+                });
+                setLoadStatus('ready');
+              } catch (err) {
+                console.warn('Disqus reset error:', err);
+              }
               setIsReloading(false);
-            } else if (attempts > 15) {
-              clearInterval(interval);
-              setLoadStatus('ready');
+            } else if (attempts > 12) {
+              if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+              // If not loaded after ~2.4s, likely ad-blocked or iframe restricted
+              setLoadStatus('blocked');
               setIsReloading(false);
             }
           }, 200);
         }
 
-        // Count script injection if not present
+        // Count script injection (non-blocking)
         if (!document.getElementById('dsq-count-scr')) {
           const cs = document.createElement('script');
           cs.id = 'dsq-count-scr';
-          cs.src = '//elan-3.disqus.com/count.js';
+          cs.src = 'https://elan-3.disqus.com/count.js';
           cs.async = true;
           (document.head || document.body).appendChild(cs);
         }
       }
-    } catch (e) {
-      console.error('Error loading Disqus:', e);
-      setLoadStatus('error');
+    } catch (err) {
+      console.warn('Disqus initialization caught:', err);
+      setLoadStatus('blocked');
       setIsReloading(false);
     }
   };
 
   useEffect(() => {
-    // Slight delay to ensure the <div id="disqus_thread"></div> DOM element is mounted in React
+    // Delay slightly to let React complete initial layout of #disqus_thread
     const timer = setTimeout(() => {
       loadDisqus();
-    }, 100);
+    }, 150);
 
     return () => {
       clearTimeout(timer);
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current);
+      }
     };
   }, [language]);
+
+  const handleInquirySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inquiryMessage.trim()) return;
+    setInquirySubmitted(true);
+    setTimeout(() => {
+      setInquiryMessage('');
+      setInquiryName('');
+      setTimeout(() => setInquirySubmitted(false), 5000);
+    }, 800);
+  };
 
   return (
     <div className="max-w-[720px] mx-auto px-4 pt-4 pb-28 text-[#171513]">
@@ -190,7 +223,7 @@ export const TalkToUsView: React.FC<TalkToUsViewProps> = ({
         </div>
       </section>
 
-      {/* Alternative Direct Channels */}
+      {/* Direct Contact Channels */}
       <section className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
         <a
           href="tel:+6567388899"
@@ -219,7 +252,7 @@ export const TalkToUsView: React.FC<TalkToUsViewProps> = ({
         </a>
       </section>
 
-      {/* Disqus Discussion Forum Section */}
+      {/* Discussion Forum Section with Disqus embed */}
       <section className="bg-white rounded-3xl p-6 sm:p-8 border border-[#e8dfd5] shadow-sm relative">
         <div className="flex items-center justify-between pb-5 border-b border-[#e8dfd5] mb-6">
           <div className="flex items-center gap-2.5">
@@ -248,7 +281,7 @@ export const TalkToUsView: React.FC<TalkToUsViewProps> = ({
           </button>
         </div>
 
-        {/* Informative tips */}
+        {/* Informative Guidance */}
         <div className="bg-[#faf7f2] rounded-xl p-3.5 border border-[#e8dfd5]/80 text-xs text-[#6e655f] mb-6 flex items-start gap-2.5">
           <Send className="w-4 h-4 text-[#b89058] shrink-0 mt-0.5" />
           <p className="leading-relaxed">
@@ -260,8 +293,41 @@ export const TalkToUsView: React.FC<TalkToUsViewProps> = ({
 
         {/* Disqus Thread Container */}
         <div className="min-h-[360px] relative">
+          {/* Active Disqus Embed Thread */}
           <div id="disqus_thread" className="w-full"></div>
-          
+
+          {/* Ad-blocker or iframe cookie restriction notice (fallback) */}
+          {loadStatus === 'blocked' && (
+            <div className="mt-4 p-5 rounded-2xl bg-[#faf7f2] border border-[#e8dfd5] text-center">
+              <AlertCircle className="w-6 h-6 text-[#b89058] mx-auto mb-2" />
+              <h3 className="font-serif text-sm font-semibold text-[#171513] mb-1">
+                {isZh ? '第三方评论加载受限' : 'Disqus Thread Protected in Preview'}
+              </h3>
+              <p className="text-xs text-[#6e655f] max-w-md mx-auto mb-4 leading-relaxed">
+                {isZh
+                  ? '若浏览器或广告拦截插件限制了第三方 Cookie，您可直接在新窗口中打开官方讨论页，或通过下方礼宾快捷留言表单咨询。'
+                  : 'If browser privacy shields or sandbox settings prevent third-party cookies, you can open the thread directly in a new tab or message our concierge directly below.'}
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <a
+                  href={`https://elan-3.disqus.com/?url=${encodeURIComponent(PAGE_URL)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1c1916] text-[#dfcdb5] text-xs font-medium hover:text-white transition-colors"
+                >
+                  <span>{isZh ? '新窗口打开 Disqus 讨论板' : 'Open in Disqus Window'}</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+                <button
+                  onClick={loadDisqus}
+                  className="px-4 py-2 rounded-xl border border-[#e8dfd5] bg-white text-xs font-medium text-[#171513] hover:border-[#b89058] transition-colors cursor-pointer"
+                >
+                  {isZh ? '重试连接' : 'Retry Connection'}
+                </button>
+              </div>
+            </div>
+          )}
+
           <noscript>
             <div className="p-6 text-center text-sm text-[#8c827a] bg-[#faf7f2] rounded-2xl border border-[#e8dfd5]">
               Please enable JavaScript to view the{' '}
@@ -270,6 +336,66 @@ export const TalkToUsView: React.FC<TalkToUsViewProps> = ({
               </a>
             </div>
           </noscript>
+        </div>
+
+        {/* Direct In-App Concierge Inquiry Form (always available) */}
+        <div className="mt-8 pt-6 border-t border-[#e8dfd5]">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-serif text-sm font-semibold text-[#171513]">
+              {isZh ? '直接向私享礼宾主任留言' : 'Direct Inquiry to Master Concierge'}
+            </h3>
+            <span className="text-[11px] text-[#b89058] font-medium">
+              {isZh ? '保密直达' : 'Private & Direct'}
+            </span>
+          </div>
+
+          {inquirySubmitted ? (
+            <div className="p-4 rounded-xl bg-[#eef7ee] border border-[#a3d9a5] text-[#226325] text-xs flex items-center gap-2.5">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>
+                {isZh
+                  ? '感谢您的留言！礼宾主任已收到您的咨询，将在2小时内通过微信或电话与您联络。'
+                  : 'Thank you for your message! Our master concierge has received your request and will respond within 2 hours.'}
+              </span>
+            </div>
+          ) : (
+            <form onSubmit={handleInquirySubmit} className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  value={inquiryName}
+                  onChange={(e) => setInquiryName(e.target.value)}
+                  placeholder={isZh ? '尊称 (如：陈女士 / Mr. Tan)' : 'Your Name / Title (e.g. Ms. Tan)'}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#faf7f2] border border-[#e8dfd5] text-xs focus:outline-hidden focus:border-[#b89058] text-[#171513]"
+                />
+                <div className="text-[11px] text-[#8c827a] flex items-center px-1">
+                  {isZh ? '将优先由新加坡当值总监回复' : 'Routed directly to the Singapore head of concierge'}
+                </div>
+              </div>
+
+              <textarea
+                rows={3}
+                value={inquiryMessage}
+                onChange={(e) => setInquiryMessage(e.target.value)}
+                required
+                placeholder={isZh ? '请输入您的问题，例如：“我适合哪位美疗师？”或“妊娠期间有哪些推荐项目？”' : 'Enter your question, e.g. "Which master esthetician suits sensitive rosacea?"'}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#faf7f2] border border-[#e8dfd5] text-xs focus:outline-hidden focus:border-[#b89058] text-[#171513] resize-none"
+              />
+
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] text-[#8c827a]">
+                  {isZh ? '全程加密传输，恪守新加坡私隐法案' : 'Encrypted transmission, compliant with Singapore PDPA'}
+                </p>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-[#1c1916] text-[#dfcdb5] hover:text-white text-xs font-semibold border border-[#b89058]/40 hover:border-[#b89058] transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                >
+                  <Send className="w-3.5 h-3.5 text-[#b89058]" />
+                  <span>{isZh ? '发送私享咨询' : 'Send Inquiry'}</span>
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       </section>
     </div>

@@ -12,6 +12,32 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script>
+      // Gracefully catch and suppress cross-origin errors from third-party widgets (e.g. Disqus comments/ads)
+      window.addEventListener('error', function(event) {
+        if (
+          event.message === 'Script error.' ||
+          (event.filename && (event.filename.indexOf('disqus.com') !== -1 || event.filename.indexOf('disquscdn.com') !== -1))
+        ) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          return true;
+        }
+      }, true);
+      window.onerror = function(message, source) {
+        if (message === 'Script error.' || (source && (source.indexOf('disqus.com') !== -1 || source.indexOf('disquscdn.com') !== -1))) {
+          return true;
+        }
+        return false;
+      };
+      window.addEventListener('unhandledrejection', function(event) {
+        var reason = event.reason ? String(event.reason) : '';
+        if (reason.indexOf('disqus') !== -1 || reason.indexOf('Script error') !== -1) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+        }
+      });
+    </script>
   </head>
   <body class="bg-[#faf7f2] text-[#171513] antialiased selection:bg-[#b89058] selection:text-white">
     <div id="root"></div>
